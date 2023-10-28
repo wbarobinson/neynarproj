@@ -84,29 +84,7 @@ app.get('/api/signer', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-app.post('/api/follow-users', async (req, res) => {
-  try {
-    const { signer_uuid, target_fids } = req.body;
 
-    const response = await axios.post(
-      'https://api.neynar.com/v2/farcaster/user/follow',
-      {
-        signer_uuid,
-        target_fids,
-      },
-      {
-        headers: {
-          api_key: process.env.NEYNAR_API_KEY,
-        },
-      },
-    );
-
-    res.json(response.data);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
 app.post('/api/cast', async (req, res) => {
   try {
     const response = await axios.post(
@@ -122,6 +100,36 @@ app.post('/api/cast', async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+app.post('/api/follow-users', async (req, res) => {
+  try {
+    const { signer_uuid, target_fids } = req.body;
+        // Log the request details
+        console.log('Sending follow-users request with the following details:');
+        console.log('Endpoint: https://api.neynar.com/v2/farcaster/user/follow');
+        console.log('Method: POST');
+        console.log('Headers:', { api_key: process.env.NEYNAR_API_KEY });
+        console.log('Body:', { signer_uuid, target_fids });
+        
+    const response = await axios.post(
+      'https://api.neynar.com/v2/farcaster/user/follow', // Ensure this is the correct endpoint for following users
+      {
+        signer_uuid: signer_uuid,
+        target_fids: target_fids
+      },
+      {
+        headers: {
+          api_key: process.env.NEYNAR_API_KEY,
+        },
+      },
+    );
+
+    res.json(response.data);
+  } catch (error) {
+    const err = error as Error;
+    console.error("Error in /api/follow-users:", JSON.stringify(err, Object.getOwnPropertyNames(err)));
+    res.status(500).json({ error: 'Internal Server Error', details: err.message });
   }
 });
 

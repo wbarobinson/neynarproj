@@ -3,7 +3,6 @@ import axios from 'axios';
 import QRCode from 'qrcode.react';
 import './App.css';
 import { DEFAULT_CAST, LOCAL_STORAGE_KEYS } from './constants';
-import { NeynarService } from './NeynarService'; // Import the Neynar Service
 
 interface FarcasterUser {
   signer_uuid: string;
@@ -108,13 +107,13 @@ function App() {
   
     try {
       // Replace with the actual targetFids array you want to follow
-      const targetFids = [12345, 67890, 11223];
+      const targetFids = await getFarcasterFIDs();
       console.log(`Attempting to follow ${targetFids.length} users`);
   
       // Make an API request to your server
       const response = await axios.post('/api/follow-users', { 
         signer_uuid: farcasterUser?.signer_uuid, 
-        targetFids 
+        target_fids: targetFids 
       });
   
       if (response.status === 200) {
@@ -124,7 +123,30 @@ function App() {
       console.error('Error following users', error);
     }
   };
+  const getFarcasterFIDs = async () => {
+    const spreadsheetId = '1CUCgxhy1OnJzU_kwLy15T_NQHTaui8phxASpy_YYnq0';
+    const range = 'Sheet1!D2:D'; // Assuming the FIDs are in the fourth column starting from row 2
   
+    const url = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:csv&range=${range}`;
+  
+    try {
+      const response = await axios.get(url);
+      const data = response.data;
+      
+      // Process the CSV data to extract FIDs
+      const fids = data.split('\n').slice(1).filter(Boolean); // Split by newline, remove header, and filter out empty values
+      
+      return fids;
+    } catch (error) {
+      console.error('Error fetching FIDs from Google Spreadsheet:', error);
+      return [];
+    }
+  };
+  
+  getFarcasterFIDs().then(fids => {
+    console.log('Farcaster FIDs:', fids);
+    // You can now use these FIDs for your follow-users function
+  });
   const displayToast = () => {
     setShowToast(true);
     setTimeout(() => {
