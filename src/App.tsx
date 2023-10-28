@@ -3,6 +3,7 @@ import axios from 'axios';
 import QRCode from 'qrcode.react';
 import './App.css';
 import { DEFAULT_CAST, LOCAL_STORAGE_KEYS } from './constants';
+import { NeynarService } from './NeynarService'; // Import the Neynar Service
 
 interface FarcasterUser {
   signer_uuid: string;
@@ -14,9 +15,7 @@ interface FarcasterUser {
 
 function App() {
   const [loading, setLoading] = useState(false);
-  const [farcasterUser, setFarcasterUser] = useState<FarcasterUser | null>(
-    null,
-  );
+  const [farcasterUser, setFarcasterUser] = useState<FarcasterUser | null>(null);
   const [text, setText] = useState<string>('');
   const [isCasting, setIsCasting] = useState<boolean>(false);
   const [showToast, setShowToast] = useState<boolean>(false);
@@ -104,12 +103,53 @@ function App() {
       setIsCasting(false); // Re-enable the button
     }
   };
-
+  const handleFollowUsers = async () => {
+    console.log("Follow Users button clicked");
+  
+    try {
+      // Replace with the actual targetFids array you want to follow
+      const targetFids = [12345, 67890, 11223];
+      console.log(`Attempting to follow ${targetFids.length} users`);
+  
+      // Make an API request to your server
+      const response = await axios.post('/api/follow-users', { 
+        signer_uuid: farcasterUser?.signer_uuid, 
+        targetFids 
+      });
+  
+      if (response.status === 200) {
+        console.log("Finished following users");
+      }
+    } catch (error) {
+      console.error('Error following users', error);
+    }
+  };
+  
   const displayToast = () => {
     setShowToast(true);
     setTimeout(() => {
       setShowToast(false);
     }, 2000);
+  };
+  const createAndStoreSigner = async () => {
+    try {
+      const response = await axios.post('/api/signer');
+      if (response.status === 200) {
+        localStorage.setItem(
+          LOCAL_STORAGE_KEYS.FARCASTER_USER,
+          JSON.stringify(response.data),
+        );
+        setFarcasterUser(response.data);
+      }
+    } catch (error) {
+      console.error('API Call failed', error);
+    }
+  };
+
+  const handleSignIn = async () => {
+    setLoading(true);
+    await createAndStoreSigner();
+    setLoading(false);
   };
 
   return (
@@ -153,7 +193,6 @@ function App() {
               onChange={(e) => setText(e.target.value)}
               rows={5}
             />
-
             <button
               className="cast-button"
               style={{
@@ -169,32 +208,12 @@ function App() {
               {isCasting ? <span>🔄</span> : 'Cast'}
             </button>
             {showToast && <div className="toast">Cast published</div>}
+            <button onClick={handleFollowUsers}>Follow Users from Sheet</button>
           </div>
         </div>
       )}
     </div>
   );
-
-  async function handleSignIn() {
-    setLoading(true);
-    await createAndStoreSigner();
-    setLoading(false);
-  }
-
-  async function createAndStoreSigner() {
-    try {
-      const response = await axios.post('/api/signer');
-      if (response.status === 200) {
-        localStorage.setItem(
-          LOCAL_STORAGE_KEYS.FARCASTER_USER,
-          JSON.stringify(response.data),
-        );
-        setFarcasterUser(response.data);
-      }
-    } catch (error) {
-      console.error('API Call failed', error);
-    }
-  }
 }
 
 export default App;

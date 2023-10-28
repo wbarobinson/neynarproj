@@ -84,7 +84,29 @@ app.get('/api/signer', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+app.post('/api/follow-users', async (req, res) => {
+  try {
+    const { signer_uuid, target_fids } = req.body;
 
+    const response = await axios.post(
+      'https://api.neynar.com/v2/farcaster/user/follow',
+      {
+        signer_uuid,
+        target_fids,
+      },
+      {
+        headers: {
+          api_key: process.env.NEYNAR_API_KEY,
+        },
+      },
+    );
+
+    res.json(response.data);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
 app.post('/api/cast', async (req, res) => {
   try {
     const response = await axios.post(
