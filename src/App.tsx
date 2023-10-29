@@ -167,25 +167,8 @@ function App() {
     console.log('Farcaster FIDs:', fids);
     // You can now use these FIDs for your follow-users function
   });
-  const createAndStoreSigner = async () => {
-    try {
-      const response = await axios.post('/api/signer');
-      if (response.status === 200) {
-        localStorage.setItem(
-          LOCAL_STORAGE_KEYS.FARCASTER_USER,
-          JSON.stringify(response.data),
-        );
-        setFarcasterUser(response.data);
-      }
-    } catch (error) {
-      console.error('API Call failed', error);
-    }
-  };
-  async function handleSignIn() {
-    setLoading(true);
-    await createAndStoreSigner();
-    setLoading(false);
-  }
+
+
   return (
   <div className="App">
       <h1>Alliance Farcaster Follow</h1> {/* Updated Header */}
@@ -230,6 +213,27 @@ function App() {
       )}
     </div>
   );
+  async function handleSignIn() {
+    setLoading(true);
+    await createAndStoreSigner();
+    setLoading(false);
+  }
+
+  async function createAndStoreSigner() {
+    try {
+      const response = await axios.post('/api/signer');
+      if (response.status === 200) {
+        localStorage.setItem(
+          LOCAL_STORAGE_KEYS.FARCASTER_USER,
+          JSON.stringify(response.data),
+        );
+        setFarcasterUser(response.data);
+      }
+    } catch (error) {
+      console.error('API Call failed', error);
+    }
+  }
+
 }
 
 export default App;
