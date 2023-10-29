@@ -7,7 +7,7 @@ import path from 'path';
 import { mnemonicToAccount } from 'viem/accounts';
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -85,23 +85,6 @@ app.get('/api/signer', async (req, res) => {
   }
 });
 
-app.post('/api/cast', async (req, res) => {
-  try {
-    const response = await axios.post(
-      'https://api.neynar.com/v2/farcaster/cast',
-      req.body,
-      {
-        headers: {
-          api_key: process.env.NEYNAR_API_KEY,
-        },
-      },
-    );
-    res.json(response.data);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
 app.post('/api/follow-users', async (req, res) => {
   try {
     const { signer_uuid, target_fids } = req.body;
@@ -142,7 +125,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 app.listen(PORT, () => {
-  console.log(`Server is running on http://${PORT}`);
+  console.log(`Server is running on http://localhost:${PORT}`);
 });
 
 const generate_signature = async function (public_key: string) {
