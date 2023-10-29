@@ -18,7 +18,8 @@
     "react-scripts": "5.0.1",
     "viem": "^1.10.14",
     "web-vitals": "^2.1.0",
-    "concurrently": "^8.2.1"
+    "concurrently": "^8.2.1",
+    "nodemon": "^3.0.1"
   },
   "scripts": {
     "start:frontend": "react-scripts start --host 0.0.0.0 --disable-host-check",
@@ -69,7 +70,6 @@
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-prettier": "^5.0.0",
     "eslint-plugin-react": "^7.33.2",
-    "nodemon": "^3.0.1",
     "prettier": "^3.0.3",
     "ts-node": "^10.9.1",
     "typescript": "^5.2.2"
