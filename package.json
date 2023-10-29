@@ -21,7 +21,7 @@
     "concurrently": "^8.2.1"
   },
   "scripts": {
-    "start:frontend": "react-scripts start",
+    "start:frontend": "react-scripts start --host 0.0.0.0 --disable-host-check",
     "start:backend": "nodemon",
     "start": "concurrently \"yarn start:frontend\" \"yarn start:backend\"",
     "build": "react-scripts build && tsc",
