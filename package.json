@@ -22,8 +22,7 @@
   "scripts": {
     "start:frontend": "react-scripts start",
     "start:backend": "nodemon",
-    "start": "node dist/server.js",
-    "heroku-postbuild": "npm run build",
+    "start": "concurrently \"yarn start:frontend\" \"yarn start:backend\"",
     "build": "react-scripts build && tsc",
     "serve": "node dist/server.js",
     "test": "react-scripts test",
