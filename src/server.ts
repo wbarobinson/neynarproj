@@ -7,8 +7,7 @@ import path from 'path';
 import { mnemonicToAccount } from 'viem/accounts';
 
 const app = express();
-const HOST = process.env.HOST || '0.0.0.0';
-const PORT = Number(process.env.PORT) || 3001;
+const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -142,8 +141,8 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
-app.listen(PORT, HOST, () => {
-  console.log(`Server is running on http://${HOST}:${PORT}`);
+app.listen(PORT, () => {
+  console.log(`Server is running on http://${PORT}`);
 });
 
 const generate_signature = async function (public_key: string) {
