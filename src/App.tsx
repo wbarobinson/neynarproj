@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import QRCode from 'qrcode.react';
 import './App.css';
-import { DEFAULT_CAST, LOCAL_STORAGE_KEYS } from './constants';
+import { LOCAL_STORAGE_KEYS } from './constants';
 
 interface FarcasterUser {
   signer_uuid: string;
@@ -15,9 +15,6 @@ interface FarcasterUser {
 function App() {
   const [loading, setLoading] = useState(false);
   const [farcasterUser, setFarcasterUser] = useState<FarcasterUser | null>(null);
-  const [text, setText] = useState<string>('');
-  const [isCasting, setIsCasting] = useState<boolean>(false);
-  const [showToast, setShowToast] = useState<boolean>(false);
 
   useEffect(() => {
     const storedData = localStorage.getItem(LOCAL_STORAGE_KEYS.FARCASTER_USER);
@@ -83,25 +80,6 @@ function App() {
     }
   }, [farcasterUser]);
 
-  const handleCast = async () => {
-    setIsCasting(true);
-    const castText = text.length === 0 ? DEFAULT_CAST : text;
-    try {
-      const response = await axios.post('/api/cast', {
-        text: castText,
-        signer_uuid: farcasterUser?.signer_uuid,
-      });
-      console.log('response', response);
-      if (response.status === 200) {
-        setText(''); // Clear the text field
-        displayToast(); // Show the toast
-      }
-    } catch (error) {
-      console.error('Could not send the cast', error);
-    } finally {
-      setIsCasting(false); // Re-enable the button
-    }
-  };
   const handleFollowUsers = async () => {
     console.log("Follow Users button clicked");
   
@@ -123,22 +101,64 @@ function App() {
       console.error('Error following users', error);
     }
   };
+  const fetchFidFromUsername = async (username: string): Promise<string | null> => {
+    const apiKey = process.env.REACT_APP_NEYNAR_API_KEY;
+    const viewerFid = process.env.FARCASTER_DEVELOPER_FID; // If needed, adjust this as well
+    const trimmedUsername = username.trim().replace(/^"|"$/g, '');
+
+    const options = {
+      method: 'GET',
+      url: `https://api.neynar.com/v1/farcaster/user-by-username?username=${trimmedUsername}&viewerFid=${viewerFid}`, 
+      headers: {
+        accept: 'application/json',
+        api_key: apiKey
+      }
+    };
+  
+    try {
+      const response = await axios.request(options);
+      if (response.data && response.data.result && response.data.result.user) {
+        return response.data.result.user.fid;
+      }
+      throw new Error('User not found');
+    } catch (error) {
+      console.error("Error fetching fid: ", error);
+      return null;
+    }
+  };
+  
   const getFarcasterFIDs = async () => {
     const spreadsheetId = '1CUCgxhy1OnJzU_kwLy15T_NQHTaui8phxASpy_YYnq0';
-    const range = 'Sheet1!D2:D'; // Assuming the FIDs are in the fourth column starting from row 2
+    const range = 'Sheet1!C:D'; // Adjusted to fetch data from third (C) and fourth (D) columns
   
     const url = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:csv&range=${range}`;
   
     try {
       const response = await axios.get(url);
       const data = response.data;
-      
-      // Process the CSV data to extract FIDs
-      const fids = data.split('\n').slice(1).filter(Boolean); // Split by newline, remove header, and filter out empty values
-      
+  
+      // Process the CSV data to extract usernames and FIDs
+      const lines = data.split('\n').slice(1).filter(Boolean); // Split by newline, remove header, and filter out empty values
+      const fids = [];
+  
+      for (const line of lines) {
+        console.log(`Processing line: ${line}`);
+        const [username, fid] = line.split(',').map((s: string) => s.trim());
+        if (fid && !isNaN(Number(fid))) {
+          fids.push(fid);
+        } else if (username) {
+          const fetchedFid = await fetchFidFromUsername(username);
+          if (fetchedFid) {
+            fids.push(fetchedFid);
+          } else {
+            console.error(`Failed to fetch FID for username: ${username}`);
+          }
+        }
+      }
+  
       return fids;
     } catch (error) {
-      console.error('Error fetching FIDs from Google Spreadsheet:', error);
+      console.error('Error fetching data from Google Spreadsheet:', error);
       return [];
     }
   };
@@ -147,12 +167,6 @@ function App() {
     console.log('Farcaster FIDs:', fids);
     // You can now use these FIDs for your follow-users function
   });
-  const displayToast = () => {
-    setShowToast(true);
-    setTimeout(() => {
-      setShowToast(false);
-    }, 2000);
-  };
   const createAndStoreSigner = async () => {
     try {
       const response = await axios.post('/api/signer');
@@ -167,24 +181,22 @@ function App() {
       console.error('API Call failed', error);
     }
   };
-
-  const handleSignIn = async () => {
+  async function handleSignIn() {
     setLoading(true);
     await createAndStoreSigner();
     setLoading(false);
-  };
-
+  }
   return (
-    <div className="App">
+  <div className="App">
+      <h1>Alliance Farcaster Follow</h1> {/* Updated Header */}
+      <p>
+        Please add your farcaster name and/or id to the spreadsheet 
+        <a href="https://docs.google.com/spreadsheets/d/1CUCgxhy1OnJzU_kwLy15T_NQHTaui8phxASpy_YYnq0/edit#gid=204458638" target="_blank" rel="noopener noreferrer"> here</a>.
+      </p>
+
       {!farcasterUser?.status && (
         <button
-          style={{
-            backgroundColor: 'purple',
-            color: 'white',
-            padding: '10px 20px',
-            fontSize: '16px',
-            cursor: loading ? 'not-allowed' : 'pointer',
-          }}
+          // ...button styles
           onClick={handleSignIn}
           disabled={loading}
         >
@@ -194,7 +206,7 @@ function App() {
 
       {farcasterUser?.status == 'pending_approval' && farcasterUser?.signer_approval_url && (
         <div className="signer-approval-container">
-          <QRCode value={farcasterUser.signer_approval_url} />
+          <QRCode className="qr-code" value={farcasterUser.signer_approval_url} />
           <div className="or-divider">OR</div>
           <a href={farcasterUser.signer_approval_url} target="_blank" rel="noopener noreferrer">
             Click here to view the signer URL
@@ -207,31 +219,7 @@ function App() {
           <div className="user-info">
             {`You are logged in as fid ${farcasterUser.fid}`}
           </div>
-          <div className="cast-container">
-            <textarea
-              className="cast-textarea"
-              placeholder={DEFAULT_CAST}
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              rows={5}
-            />
-            <button
-              className="cast-button"
-              style={{
-                backgroundColor: 'purple',
-                color: 'white',
-                padding: '10px 20px',
-                fontSize: '16px',
-                cursor: isCasting ? 'not-allowed' : 'pointer',
-              }}
-              onClick={handleCast}
-              disabled={isCasting}
-            >
-              {isCasting ? <span>🔄</span> : 'Cast'}
-            </button>
-            {showToast && <div className="toast">Cast published</div>}
-            <button onClick={handleFollowUsers}>Follow Users from Sheet</button>
-          </div>
+          <button className="follow-button" onClick={handleFollowUsers}>Follow Users from Sheet</button>
         </div>
       )}
     </div>
