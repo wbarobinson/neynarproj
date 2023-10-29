@@ -196,7 +196,13 @@ function App() {
 
       {!farcasterUser?.status && (
         <button
-          // ...button styles
+          style={{
+            backgroundColor: 'purple',
+            color: 'white',
+            padding: '10px 20px',
+            fontSize: '16px',
+            cursor: loading ? 'not-allowed' : 'pointer',
+          }}
           onClick={handleSignIn}
           disabled={loading}
         >
